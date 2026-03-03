@@ -36,7 +36,7 @@ echo -e "${BLUE}>>> Starting Kustom Kernel Build (Port ROM Supported)...${NC}"
 
 # 3. Install Arch Dependencies
 echo -e "${BLUE}>>> Installing Arch Dependencies...${NC}"
-sudo pacman -S --needed --noconfirm base-devel git bc python python-pip ncurses libxml2 xmlto inetutils cpio unzip rsync wget multilib-devel pahole
+# sudo pacman -S --needed --noconfirm base-devel git bc python python-pip ncurses libxml2 xmlto inetutils cpio unzip rsync wget multilib-devel pahole
 
 # 4. Setup Directories
 mkdir -p "$WORK_DIR"
@@ -103,7 +103,8 @@ fi
 # We forcefully disable the logging logic by commenting out the variable usage.
 # This is more robust than trying to patch the struct.
 echo -e "${GREEN}Disabling broken logging in qpnp-power-on.c...${NC}"
-sed -i 's/pon->log_kpd_event/false/g' drivers/input/misc/qpnp-power-on.c
+perl -pi -e 's/pon->log_kpd_event\s*=/bool _dummy_kpd = /g' drivers/input/misc/qpnp-power-on.c
+perl -pi -e 's/pon->log_kpd_event/false/g' drivers/input/misc/qpnp-power-on.c
 
 # 9. Configure Kernel
 echo -e "${BLUE}>>> Configuring Kernel...${NC}"
@@ -160,7 +161,7 @@ sed -i 's/^CONFIG_LOCALVERSION=.*/CONFIG_LOCALVERSION="-Kustom"/' "$CONFIG_FILE"
     --disable WERROR
 
 # Update config non-interactively
-make O=out ARCH=arm64 olddefconfig
+make O=out ARCH=arm64 CC="$CLANG_PATH/clang" LD="$CLANG_PATH/ld.lld" AR="$CLANG_PATH/llvm-ar" NM="$CLANG_PATH/llvm-nm" OBJCOPY="$CLANG_PATH/llvm-objcopy" OBJDUMP="$CLANG_PATH/llvm-objdump" STRIP="$CLANG_PATH/llvm-strip" HOSTCC=gcc HOSTCXX=g++ CROSS_COMPILE=aarch64-linux-gnu- CROSS_COMPILE_ARM32=arm-linux-gnueabi- CLANG_TRIPLE=aarch64-linux-gnu- olddefconfig
 
 # 10. Compile
 echo -e "${BLUE}>>> Compiling...${NC}"
